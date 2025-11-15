@@ -52,6 +52,8 @@ public class ServerSettings {
 
   private boolean ignoreDocAndXlsFiles = true;
 
+  private String cronSchedule = null;
+
   private ServerSettings() {
 
   }
@@ -176,5 +178,13 @@ public class ServerSettings {
 
   public boolean getIgnoreDocAndXlsFiles() {
     return ignoreDocAndXlsFiles;
+  }
+
+  public String getCronSchedule() {
+    return cronSchedule;
+  }
+
+  public void setCronSchedule(String cronSchedule) {
+    this.cronSchedule = cronSchedule;
   }
 }

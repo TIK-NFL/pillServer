@@ -18,6 +18,8 @@ This code is based on the original ILIAS code (https://github.com/ILIAS-eLearnin
 
 <!-- /MarkdownTOC -->
 
+Cron Schedule documentation: https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html
+
 <a name="apache-lucene"></a>
 # Apache Lucene
 

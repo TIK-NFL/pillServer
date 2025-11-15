@@ -202,7 +202,7 @@ public class ILServer {
 
       settings = ServerSettings.getInstance();
       logger.info("New rpc server");
-      rpc = RPCServer.getInstance(settings.getHost(), settings.getPort());
+      rpc = RPCServer.getInstance(settings.getHost(), settings.getPort(), settings.getCronSchedule());
       logger.info("Server start");
       rpc.start();
 

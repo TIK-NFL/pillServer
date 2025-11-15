@@ -25,6 +25,7 @@ package de.ilias.services.rpc;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 
 import de.ilias.services.lucene.index.UpdateIndexJob;
+import de.ilias.services.settings.ClientSettings;
 import de.ilias.services.settings.ConfigurationException;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +35,7 @@ import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
+import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -60,20 +62,24 @@ public class RPCServer {
   private InetAddress host = null;
   private int port = 0;
   private boolean alive = false;
+  private String cronSchedule = null;
 
-  private RPCServer(InetAddress host, int port) throws XmlRpcException, SchedulerException {
+  private RPCServer(InetAddress host, int port, String cronSchedule) throws XmlRpcException, SchedulerException {
 
     logger.info("New RPCServer construct.");
-    setHost(host);
-    setPort(port);
+    this.host = host;
+    this.port = port;
+    this.cronSchedule = cronSchedule;
     initServer();
-    initScheduler();
+    if (cronSchedule != null) {
+      initScheduler();
+    }
   }
 
-  public static RPCServer getInstance(InetAddress host, int port) throws XmlRpcException, SchedulerException {
+  public static RPCServer getInstance(InetAddress host, int port, String cronSchedule) throws XmlRpcException, SchedulerException {
 
     if (RPCServer.instance == null) {
-      return RPCServer.instance = new RPCServer(host, port);
+      return RPCServer.instance = new RPCServer(host, port, cronSchedule);
     }
     return instance;
   }
@@ -91,24 +97,10 @@ public class RPCServer {
   }
 
   /**
-   * @param host the host to set
-   */
-  public void setHost(InetAddress host) {
-    this.host = host;
-  }
-
-  /**
    * @return the port
    */
   public int getPort() {
     return port;
-  }
-
-  /**
-   * @param port the port to set
-   */
-  public void setPort(int port) {
-    this.port = port;
   }
 
   /**
@@ -148,15 +140,12 @@ public class RPCServer {
     scheduler = StdSchedulerFactory.getDefaultScheduler();
     JobDetail job = JobBuilder.newJob(UpdateIndexJob.class)
             .withIdentity("updateJob", "group1")
-            .usingJobData("jobSays", "Hello World!")
-            .usingJobData("myFloatValue", 3.141f)
+            .usingJobData("clientKey", ClientSettings.getClients().getFirst())
             .build();
     Trigger trigger = TriggerBuilder.newTrigger()
             .withIdentity("myTrigger", "group1")
             .startNow()
-            .withSchedule(simpleSchedule()
-                    .withIntervalInSeconds(60)
-                    .repeatForever())
+            .withSchedule(CronScheduleBuilder.cronSchedule(cronSchedule))
             .build();
     scheduler.scheduleJob(job, trigger);
   }
@@ -168,15 +157,19 @@ public class RPCServer {
 
     try {
       logger.info("Starting ILIAS RPC-Server...");
-      scheduler.start();
-      logger.info("Started quartz scheduler");
+      if (cronSchedule != null) {
+        scheduler.start();
+        logger.info("Started quartz scheduler with scheduled cron expression: {}", cronSchedule);
+      } else {
+        logger.warn("Cron schedule is null. Not starting Index Update job");
+      }
       server.start();
-      logger.debug("Using host :" + getHost().toString());
-      logger.debug("Using port :" + getPort());
+      logger.debug("Using host :{}", getHost().toString());
+      logger.debug("Using port :{}", getPort());
       logger.info("Waiting for connections...");
       alive = true;
     } catch (Exception e) {
-      logger.error("Cannot bind to host: " + getHost() + ", port: " + port + " " + e);
+      logger.error("Cannot bind to host: {}, port: {} {}", getHost(), port, e);
       throw new ConfigurationException(e.getMessage());
     } catch (Throwable e) {
       logger.error(e);
@@ -191,8 +184,10 @@ public class RPCServer {
 
     logger.info("Stopping webserver...");
     server.shutdown();
-    logger.info("Stopping scheduler");
-    scheduler.shutdown();
+    if (scheduler != null) {
+      logger.info("Stopping scheduler");
+      scheduler.shutdown();
+    }
     alive = false;
   }
 

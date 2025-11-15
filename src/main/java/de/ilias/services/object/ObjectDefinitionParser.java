@@ -127,7 +127,7 @@ public class ObjectDefinitionParser {
     }
 
     if (root.getAttributeValue("indexType") != null) {
-      definition = new ObjectDefinition(root.getAttributeValue("type"), ObjectDefinition.INDEX_TYPE.valueOf(root.getAttributeValue("indexType")));
+      definition = new ObjectDefinition(root.getAttributeValue("type"), ObjectDefinition.INDEX_TYPE.valueOf(root.getAttributeValue("indexType").toUpperCase()));
     } else {
       definition = new ObjectDefinition(root.getAttributeValue("type"));
     }

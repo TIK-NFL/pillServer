@@ -75,6 +75,9 @@ public class IniFileParser {
           if (section.containsKey("IgnoreDocAndXlsFiles")) {
             serverSettings.setIgnoreDocAndXlsFiles(Boolean.parseBoolean(section.get("IgnoreDocAndXlsFiles")));
           }
+          if (section.containsKey("CronSchedule")) {
+            serverSettings.setCronSchedule(purgeString(section.get("CronSchedule")));
+          }
         }
         if (section.getName().startsWith("Client") && parseClientSettings) {
           if (section.containsKey("ClientId")) {
