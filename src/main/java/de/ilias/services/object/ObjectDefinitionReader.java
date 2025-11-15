@@ -79,7 +79,7 @@ public class ObjectDefinitionReader {
 
     // Traverse through Modules
     File start = new File(absolutePath.getAbsoluteFile() + FileSystems.getDefault().getSeparator() + "Modules");
-    logger.debug("Start path is : " + start.getAbsoluteFile());
+    logger.debug("Start path is : {}", start.getAbsoluteFile());
     traverse(start);
 
     // Traverse through Modules
@@ -104,12 +104,12 @@ public class ObjectDefinitionReader {
     File[] entries = dir.listFiles(path -> {
 
       if (path.isDirectory()) {
-        //logger.debugQ"Found new directory: " + path.getAbsolutePath());
+        //logger.debug("Found new directory: " + path.getAbsolutePath());
         return !path.getName().equals(".git");
       }
       //logger.debug(path.getName() + " <-> " + objectPropertyName);
       if (path.getName().equalsIgnoreCase(objectPropertyName)) {
-        logger.info("Found: " + path.getAbsolutePath());
+        logger.info("Found: {}", path.getAbsolutePath());
         objectPropertyFiles.add(path);
       }
       return false;

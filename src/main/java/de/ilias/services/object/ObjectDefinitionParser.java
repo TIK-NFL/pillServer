@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ListIterator;
 import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -56,11 +57,13 @@ public class ObjectDefinitionParser {
 
   public void parse() throws ObjectDefinitionException {
 
-    logger.debug("Start parsing object definitions");
-    for (int i = 0; i < objectPropertyFiles.size(); i++) {
-
-      logger.debug("File nr. " + i + ":" + objectPropertyFiles.get(i).getAbsolutePath());
-      parseFile(objectPropertyFiles.get(i));
+    logger.debug("Start parsing object definitions. Total definitions: {}", objectPropertyFiles.size());
+    ListIterator<File> iterator = objectPropertyFiles.listIterator();
+    while (iterator.hasNext()) {
+      int index = iterator.nextIndex();
+      File file = iterator.next();
+      logger.debug("File nr. {}:{}", index, file.getAbsolutePath());
+      parseFile(file);
     }
   }
 
@@ -95,13 +98,12 @@ public class ObjectDefinitionParser {
 
       // JDOM does not understand x:include but has a more comfortable API.
       org.jdom2.Document jdocument = convertToJDOM(document);
-
       definitions.addDefinition(parseObjectDefinition(jdocument));
 
       logger.debug(definitions.toString());
 
     } catch (IOException e) {
-      logger.error("Cannot handle file: " + file.getAbsolutePath());
+      logger.error("Cannot handle file: {}", file.getAbsolutePath());
       throw new ObjectDefinitionException(e);
     } catch (Exception e) {
       StringWriter writer = new StringWriter();
@@ -147,12 +149,13 @@ public class ObjectDefinitionParser {
       throw new ObjectDefinitionException("Cannot find element 'Document'");
     }
 
+    //TODO this variable is only used in debug output. Maybe we can just remove it
     DocumentDefinition definition = new DocumentDefinition(element.getAttributeValue("type"));
 
     // Workaround xi:include of metaData
     for (Element dataSources : element.getChildren("DataSources")) {
 
-      logger.info("Adding DataSources...");
+      logger.debug("Adding DataSources...");
       for (Element source : dataSources.getChildren("DataSource")) {
 
         definition.addDataSource(parseDataSource(source));
@@ -177,17 +180,18 @@ public class ObjectDefinitionParser {
 
     if (source.getAttributeValue("type").equalsIgnoreCase("JDBC")) {
 
-      ds = new JDBCDataSource();
-      ds.setAction(DataSource.ACTION.valueOfLabel(source.getAttributeValue("action").toLowerCase()));
-      ((JDBCDataSource) ds).setQuery(source.getChildText("Query").trim());
+      JDBCDataSource jdbcDS = new JDBCDataSource();
+      jdbcDS.setAction(DataSource.ACTION.valueOfLabel(source.getAttributeValue("action").toLowerCase()));
+      jdbcDS.setQuery(source.getChildText("Query").trim());
 
       // Set parameters
       for (Element param : source.getChildren("Param")) {
 
         ParameterDefinition parameter = new ParameterDefinition(param.getAttributeValue("format"),
             param.getAttributeValue("type"), param.getAttributeValue("value"));
-        ((JDBCDataSource) ds).addParameter(parameter);
+        jdbcDS.addParameter(parameter);
       }
+      ds = jdbcDS;
 
     } else if (source.getAttributeValue("type").equalsIgnoreCase("File")) {
 
@@ -222,7 +226,7 @@ public class ObjectDefinitionParser {
     // workaround for nested xi:include (e.g meta data)
     for (Element dataSources : source.getChildren("DataSources")) {
 
-      logger.info("Adding nested dataSources...");
+      logger.debug("Adding nested dataSources...");
       for (Element xiDS : dataSources.getChildren("DataSource")) {
 
         ds.addDataSource(parseDataSource(xiDS));

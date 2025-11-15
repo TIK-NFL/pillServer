@@ -64,29 +64,15 @@ public class ParameterDefinition {
     this.value = value;
   }
 
-  /**
-   * @return the type
-   */
-  public int getType() {
-    return type;
-  }
-
-  /**
-   * @return the value
-   */
-  public String getValue() {
-    return value;
-  }
-
   @Override
   public String toString() {
-    return "Parameter " + format + " " + type + " " + value + "\n";
+    return "<Parameter format:" + format + " type:" + type + " value:" + value + ">";
   }
 
   public void writeParameter(PreparedStatement pst, int index, CommandQueueElement el, ResultSet parentResult)
           throws SQLException, DocumentHandlerException {
 
-    switch (getType()) {
+    switch (type) {
       case TYPE_INT:
         logger.trace("ID: " + getParameterValue(el, parentResult));
         pst.setInt(index, getParameterValue(el, parentResult));
@@ -98,7 +84,7 @@ public class ParameterDefinition {
         break;
 
       default:
-        throw new DocumentHandlerException("Invalid parameter type given. Type " + getType());
+        throw new DocumentHandlerException("Invalid parameter type given. Type " + type);
     }
   }
 
@@ -109,8 +95,8 @@ public class ParameterDefinition {
 
       logger.trace("Trying to read parameter from parent result set...");
       try {
-        logger.trace(parentResult.getInt(getValue()));
-        return parentResult.getInt(getValue());
+        logger.trace(parentResult.getInt(value));
+        return parentResult.getInt(value);
       } catch (SQLException e) {
         // ignoring this error
         // and trying to fetch objId and metaObjId
@@ -118,17 +104,17 @@ public class ParameterDefinition {
 
     }
 
-    if (getValue().equals("objId")) {
+    if (value.equals("objId")) {
       logger.trace(el.getObjId());
       return el.getObjId();
     }
 
-    if (getValue().equals("metaObjId")) {
+    if (value.equals("metaObjId")) {
       logger.trace(el.getObjId());
       return el.getObjId();
     }
 
-    if (getValue().equals("metaRbacId")) {
+    if (value.equals("metaRbacId")) {
       logger.trace(el.getObjId());
       return el.getObjId();
     }
@@ -142,20 +128,20 @@ public class ParameterDefinition {
       logger.debug("Trying to read parameter from parent result set...");
 
       try {
-        logger.debug(parentResult.getString(getValue()).trim());
-        return DBFactory.getString(parentResult, getValue());
+        logger.debug(parentResult.getString(value).trim());
+        return DBFactory.getString(parentResult, value);
       } catch (SQLException e) {
         // ignoring this error
         // and trying to fetch objId and metaObjId
       }
     }
 
-    if (getValue().equals("objType")) {
+    if (value.equals("objType")) {
       logger.trace(el.getObjType());
       return el.getObjType();
     }
 
-    if (getValue().equals("metaType")) {
+    if (value.equals("metaType")) {
       logger.trace(el.getObjType());
       return el.getObjType();
     }

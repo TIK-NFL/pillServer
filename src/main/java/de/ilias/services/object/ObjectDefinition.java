@@ -56,7 +56,7 @@ public class ObjectDefinition {
   }
 
   public ObjectDefinition(String type) {
-    logger.debug("Found new definition for type: " + type);
+    logger.debug("Found new definition for type: {}", type);
     this.type = type;
   }
 
