@@ -42,7 +42,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopScoreDocCollector;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopScoreDocCollectorManager;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 
@@ -106,10 +106,9 @@ public class RPCSearchHandler {
 
       TopScoreDocCollectorManager collectorManager = new TopScoreDocCollectorManager(1000,1000);
       long s_start = new java.util.Date().getTime();
-      searcher.search(query, collectorManager);
+      TopDocs topDocs = searcher.search(query, collectorManager);
       long s_end = new java.util.Date().getTime();
-      TopScoreDocCollector collector = collectorManager.newCollector();
-      ScoreDoc[] hits = collector.topDocs().scoreDocs;
+      ScoreDoc[] hits = topDocs.scoreDocs;
 
       SearchResultWriter writer = new SearchResultWriter(hits);
       writer.setOffset(SearchHolder.SEARCH_LIMIT * (pageNumber - 1));
@@ -118,7 +117,7 @@ public class RPCSearchHandler {
       long end = new java.util.Date().getTime();
       logger.info("Total time: " + (end - start));
       logger.info("Query time: " + (s_end - s_start));
-      logger.info("Num hits: " + collector.topDocs().totalHits);
+      logger.info("Num hits: " + topDocs.totalHits);
 
       return writer.toXML();
     } catch (ConfigurationException e) {
@@ -149,7 +148,7 @@ public class RPCSearchHandler {
 
     IndexSearcher.setMaxClauseCount(10000);
     BooleanQuery query = (BooleanQuery) multiParser.parse(rewrittenQuery);
-    logger.info("Max clauses allowed: " + IndexSearcher.getMaxClauseCount());
+    logger.info("Max clauses allowed: {}", IndexSearcher.getMaxClauseCount());
     return query;
   }
 
@@ -242,11 +241,10 @@ public class RPCSearchHandler {
   }
 
   private String getHitHighLighterAsXML(IndexSearcher searcher, long start, Query query, int maxHits) throws IOException, ConfigurationException, SQLException, InvalidTokenOffsetsException {
-    logger.info("Rewritten query is: " + query.toString());
+    logger.info("Rewritten query is: {}", query.toString());
     TopScoreDocCollectorManager collectorManager = new TopScoreDocCollectorManager(maxHits,maxHits);
-    searcher.search(query, collectorManager);
-    TopScoreDocCollector collector = collectorManager.newCollector();
-    ScoreDoc[] hits = collector.topDocs().scoreDocs;
+    TopDocs topDocs =  searcher.search(query, collectorManager);
+    ScoreDoc[] hits = topDocs.scoreDocs;
 
     long h_start = new java.util.Date().getTime();
     HitHighlighter hh = new HitHighlighter(query, hits);
@@ -256,7 +254,7 @@ public class RPCSearchHandler {
     long end = new java.util.Date().getTime();
     logger.info("Highlighter time: " + (h_end - h_start));
     logger.info("Total time: " + (end - start));
-    logger.info("Num hits: " + collector.topDocs().totalHits);
+    logger.info("Num hits: " + topDocs.totalHits);
     return hh.toXML();
   }
 
