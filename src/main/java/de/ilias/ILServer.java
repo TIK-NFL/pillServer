@@ -39,7 +39,8 @@ import org.quartz.SchedulerException;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 
 /**
@@ -242,12 +243,14 @@ public class ILServer {
     } catch (InterruptedException e) {
       logger.error("VM did not allow to sleep. Aborting!");
     } catch (XmlRpcException e) {
-      logger.error("Error starting server: " + e);
+      logger.error("Error starting server: {}", String.valueOf(e));
       System.exit(1);
     } catch (IOException e) {
-      logger.error("IOException " + e.getMessage());
+      logger.error("IOException {}",e.getMessage());
     } catch (SchedulerException e) {
       logger.error("Issue with scheduler", e);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -267,11 +270,13 @@ public class ILServer {
       client = initRpcClient();
       client.execute("RPCAdministration.stop", Collections.EMPTY_LIST);
     } catch (ConfigurationException e) {
-      logger.error("Configuration " + e.getMessage());
+      logger.error("Configuration {}", e.getMessage());
     } catch (XmlRpcException e) {
-      logger.error("XMLRPC " + e.getMessage());
+      logger.error("XmlRpc Exception {}", e.getMessage());
     } catch (IOException e) {
-      logger.error("IOException " + e.getMessage());
+      logger.error("IOException {}", e.getMessage());
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -286,14 +291,14 @@ public class ILServer {
   /**
    * @return XmlRpcClient
    */
-  private XmlRpcClient initRpcClient() throws MalformedURLException {
+  private XmlRpcClient initRpcClient() throws MalformedURLException, URISyntaxException {
     XmlRpcClient client;
     XmlRpcClientConfigImpl config;
     ServerSettings settings;
 
     settings = ServerSettings.getInstance();
     config = new XmlRpcClientConfigImpl();
-    config.setServerURL(new URL(settings.getServerUrl()));
+    config.setServerURL(new URI(settings.getServerUrl()).toURL());
     config.setConnectionTimeout(10000);
     config.setReplyTimeout(0);
 

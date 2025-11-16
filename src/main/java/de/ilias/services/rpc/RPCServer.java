@@ -22,8 +22,6 @@
 
 package de.ilias.services.rpc;
 
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-
 import de.ilias.services.lucene.index.UpdateIndexJob;
 import de.ilias.services.settings.ClientSettings;
 import de.ilias.services.settings.ConfigurationException;
